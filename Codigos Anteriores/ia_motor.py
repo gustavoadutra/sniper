@@ -70,13 +70,13 @@ PROTOCOL_VERSION = 1.0
 DXL_ID_X = 1
 DXL_ID_Y = 2
 BAUDRATE = 57600
-DEVICE = 'COM3'
+DEVICE = 'COM4'
 ENABLE = 1
 DISABLE = 0
 
 # X axis
-DXL_MINIMUM_POSITION_VALUE_X = 880
-DXL_MAXIMUM_POSITION_VALUE_X = 3880
+DXL_MINIMUM_POSITION_VALUE_X = 1160
+DXL_MAXIMUM_POSITION_VALUE_X = 3430
 dxl_goal_position_x = 2280  # Goal position
 # Y axis
 DXL_MINIMUM_POSITION_VALUE_Y = 1570
@@ -142,7 +142,9 @@ def mouse_detection(event, mouse_x, mouse_y, flag, param):  # Mouse Parameters
 
     if event == cv2.EVENT_LBUTTONDOWN and (key_h[1] is True):  # Center Cameras
         go_motor_x = int((mouseX - center_x_shooter) * MAP)  # With 2 Cams CHANGE TO center_x_spotter
+        go_motor_y = int((mouseY - center_y_shooter) * MAP)  # With 2 Cams CHANGE TO center_y_spotter
         key_x[1] = True  # X axis camera, motor Id:1
+        key_y[1] = True  # Y axis camera, motor Id:2
 
     if event == cv2.EVENT_MOUSEWHEEL:  # MouseWheel Grow the Square ROI
         if flag > 0:
@@ -195,6 +197,9 @@ def holistic_aim(frame_shooter_def):  # MediaPipe in the Sniper View
         cv2.putText(image_shooter, f'{distance_shooter_center_y}', (center_x_shooter + 20, y_shooter + 15),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (BGR[8]), 2)  # y
 
+        aim_sq = 50
+        if distance_shooter_center_x in range(-aim_sq, aim_sq) and distance_shooter_center_y in range(-aim_sq, aim_sq):
+            print('target on')
 
     return image_shooter
 
@@ -209,14 +214,15 @@ with mp_holistic.Holistic(min_detection_confidence=0.6, min_tracking_confidence=
 
         _, frame_shooter = webcam_shooter.read()  # shooter
         #  _, frame_spotter = webcam_spotter.read()  # spotter
-        # frame_shooter = cv2.flip(frame_shooter, 1)
+        frame_shooter = cv2.flip(frame_shooter, 1)
+        # frame_spotter = cv2.flip(frame_spotter, 1)
         center_x_shooter = int(frame_shooter.shape[1] * 0.5)
         center_y_shooter = int(frame_shooter.shape[0] * 0.5)
         # center_x_spotter = int(frame_spotter.shape[1] * 0.5)
         # center_y_spotter = int(frame_spotter.shape[0] * 0.5)
 
-        # if not (webcam_shooter.read())[0]:  # or not (webcam_spotter.read())[0]:
-            # break
+        if not (webcam_shooter.read())[0]:  # or not (webcam_spotter.read())[0]:
+            break
 
         cv2.namedWindow('Shooter View')
         cv2.setMouseCallback('Shooter View', mouse_detection)
@@ -248,9 +254,9 @@ with mp_holistic.Holistic(min_detection_confidence=0.6, min_tracking_confidence=
             frame_shooter = holistic_aim(frame_shooter)
             # Read the actual position
             go_motor_x = int(-distance_shooter_center_x)
-
+            go_motor_y = int(distance_shooter_center_y)
             key_x[1] = True  # X axis camera, motor Id:1
-
+            key_y[1] = True  # Y axis camera, motor Id:2
 
         if key_g[1] is True:  # Turn ON the Selection of a ROI
             print('g pressed')
@@ -311,7 +317,7 @@ with mp_holistic.Holistic(min_detection_confidence=0.6, min_tracking_confidence=
             # Write goal position
             packetHandler.write2ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_GOAL_POSITION, dxl_goal_position_y)
 
-            while True:
+            while 1:
                 # Read present position
                 dxl_present_position_y, dxl_comm_result_y, dxl_error_y = packetHandler.read2ByteTxRx(portHandler,
                                                                                                      DXL_ID_Y,
