@@ -1,4 +1,0 @@
-# Adcionar as bibliotecas necessárias e versão 
-
-
-dearpygui==1.7.0   # pip install dearpygui 
