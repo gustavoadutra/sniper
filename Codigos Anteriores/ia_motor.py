@@ -16,6 +16,7 @@ import serial
 webcam_shooter = cv2.VideoCapture(0)  # CAM
 webcam_shooter.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
 webcam_shooter.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
+
 # webcam_spotter = cv2.VideoCapture(2)  # CAM
 # webcam_spotter.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
 # webcam_spotter.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
@@ -34,8 +35,10 @@ key_y = [0, False]  # motor y turn ON
 
 mouseX = 0
 mouseY = 0
+
 distance_shooter_center_x = 0
 distance_shooter_center_y = 0
+
 r_ROI_X = 30  # Range ROI
 r_ROI_Y = 60  # Range ROI
 go_motor_x = None
@@ -70,7 +73,7 @@ PROTOCOL_VERSION = 1.0
 DXL_ID_X = 1
 DXL_ID_Y = 2
 BAUDRATE = 57600
-DEVICE = 'COM3'
+DEVICE = 'COM18'
 ENABLE = 1
 DISABLE = 0
 

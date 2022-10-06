@@ -7,18 +7,21 @@ img_shooter = []
 Shooter = None 
 Spotter = None
 
+
 # Inicia a câmera ou carrega um vídeo do CAP_ID
 def init_capture( CAP_ID : str, w : int = 480, h : int = 640 ):
     try:
-        cap = cv2.VideoCapture( CAP_ID )
+        cap = cv2.VideoCapture( CAP_ID,  cv2.CAP_DSHOW )
         cap.set( cv2.CAP_PROP_FRAME_WIDTH , w )
         cap.set( cv2.CAP_PROP_FRAME_HEIGHT, h )
+        
 
         _, frame = cap.read()
         
         # Image size or you can get this from image shape
         frame_width     = cap.get( cv2.CAP_PROP_FRAME_WIDTH  )
         frame_height    = cap.get( cv2.CAP_PROP_FRAME_HEIGHT )
+        print( frame_width, frame_height )
 
         # First webcam run to create the texture registry  
         data = np.flip( frame, 2 )
