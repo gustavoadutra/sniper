@@ -1,93 +1,140 @@
-from dynamixel_sdk import * 
-import serial 
-
-# Control table address
-ADDR_MX_TORQUE = 24
-ADDR_MX_GOAL_POSITION = 30
-ADDR_MX_PRESENT_POSITION = 36
-
-# Protocol version
-PROTOCOL_VERSION = 1.0
-
-# Default setting
-DXL_ID_X = 1
-DXL_ID_Y = 2
-BAUDRATE = 57600
-DEVICE = 'COM3'
-ENABLE = 1
-DISABLE = 0
-
-# X axis
-DXL_MINIMUM_POSITION_VALUE_X = 880
-DXL_MAXIMUM_POSITION_VALUE_X = 3880
-dxl_goal_position_x = 2280  # Goal position
-
-# Y axis
-DXL_MINIMUM_POSITION_VALUE_Y = 1570
-DXL_MAXIMUM_POSITION_VALUE_Y = 2630
-dxl_goal_position_y = 2050  # Goal position
-
-DXL_MOVING_STATUS_THRESHOLD = 20  # (min > 3)
-MAP = 1.017
-
-# Initialize PacketHandler instance
-portHandler   = None   
-packetHandler = None       
+from dynamixel_sdk import *
 
 
-# Open port
-def open_port( device : str = 'COM3', protocol_version : float = 1.0):
-    global portHandler, packetHandler 
-
-    portHandler = PortHandler( DEVICE )
-    packetHandler = PacketHandler( PROTOCOL_VERSION )
-    
-    status = portHandler.openPort()
-    if status:
-        print("Succeeded to open the port")
-        return True
+def verify_goal_position(goal, goal_max, goal_min):
+    """
+    Verfica se a posição desejada é válida;
+    :param goal: Posição desejada.
+    :param goal_max: Posição máxima válida.
+    :param goal_min: Posição mínima válida.
+    :return:
+    """
+    if goal > goal_max:
+        return goal_max
+    elif goal < goal_min:
+        return goal_min
     else:
-        print("Failed to open the port")
-        return False     
+        return goal
 
 
-# Set port baudrate
-def set_baudrate( bauds : int = 9600 ):
-    global BAUDRATE, portHandler 
+class VigilantMotors:
 
-    status = portHandler.setBaudRate( bauds )
-    if status:
-        print("Succeeded to change the baudrate")
-        BAUDRATE = bauds 
-        return True 
-    else:
-        print("Failed to change the baudrate")
-        return False
+    def __init__(self):
 
+        # =======================
+        #        Motor X
+        # =======================
 
-#  PID Parameters
-def set_PID_parameters():
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, 28, 6)   # P
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, 27, 0)   # I
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, 26, 10)  # D
+        self.DXL_ID_X = 1
+        self.goal_max_x = 3150
+        self.goal_min_x = 1100
+        self.goal_x = 2120
+        self.center_x = 320
 
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 28, 6)   # P
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 27, 0)   # I
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 26, 10)  # D
+        # =======================
+        #       Motor Y
+        # =======================
 
+        self.DXL_ID_Y = 2
+        self.goal_max_y = 2600
+        self.goal_min_y = 1600
+        self.goal_y = 2050
+        self.center_y = 240
 
+        # =======================
+        #    MX106 VARIABLES
+        # =======================
 
-# Enable Dynamixel Torque
-def enable_torque():
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, ADDR_MX_TORQUE, ENABLE)
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_TORQUE, ENABLE)
+        # Control table address
+        self.ADDR_MX_TORQUE = 24
+        self.ADDR_MX_GOAL_POSITION = 30
+        self.ADDR_MX_PRESENT_POSITION = 36
 
-# Go to initial position
-def initial_position():
-    packetHandler.write2ByteTxRx(portHandler, DXL_ID_X, ADDR_MX_GOAL_POSITION, dxl_goal_position_x)
-    packetHandler.write2ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_GOAL_POSITION, dxl_goal_position_y)
+        # Protocol version
+        self.PROTOCOL_VERSION = 1.0
 
-# Disable Dynamixel Torque
-def disable_torque():
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, ADDR_MX_TORQUE, DISABLE)
-    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_TORQUE, DISABLE)
+        self.BAUDRATE = 57600
+        self.DEVICE = '/dev/ttyACM0'
+
+        self.TORQUE_ENABLE = 1
+        self.TORQUE_DISABLE = 0
+
+        self.TargetRange = 10  # (min > 3)
+
+        self.portHandler = PortHandler(self.DEVICE)
+        self.packetHandler = PacketHandler(self.PROTOCOL_VERSION)
+
+        # Open port
+        self.portHandler.openPort()
+
+        # Set port baudrate
+        self.portHandler.setBaudRate(self.BAUDRATE)
+
+        # Defining Return Delay Time
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 5, 50)
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 5, 50)
+
+        # PID X
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 28, 6)  # P
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 27, 1)  # I
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 26, 200)  # D
+        # PID Y
+        #self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 28, 6)  # P
+        #self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 27, 1)  # I
+        #self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 26, 200)  # D
+
+        # self.packetHandler.write2ByteTxRx(self.portHandler, self.DXL_ID_X, self.ADDR_MX_GOAL_POSITION, 2120)
+
+    def calculate_route(self, coord_x, coord_y):
+        """
+        Faz o cálculo da coordenada, recebe os valores em pixel
+        e retorna as coordenadas que devolve em ângulo para os motores;
+        :param coord_x: Valor em pixel da coordenada desejada x;
+        :param coord_y: Valor em pixel da coordenada desejada y;
+        :return:
+        """
+        self.get_present_pos()
+        self.goal_x = int(self.dxl_present_position_x + (self.center_x - coord_x))
+        # verificar
+        # self.goal_y = int(self.dxl_present_position_y + (self.center_y - coord_y))
+        # Verificando a posição de x;
+        # self.goal_x = verify_goal_position(self.goal_x, self.goal_max_x, self.goal_min_x)
+        # Verificando a posição de y;
+        self.goal_y = verify_goal_position(self.goal_y, self.goal_max_y, self.goal_min_y)
+
+    def get_present_pos(self):
+        """
+        Pega a posição a localização atual do robô;
+        :return:
+        """
+        dxl_comm_result_x, dxl_comm_result_y = 1, 1
+
+        while dxl_comm_result_x != 0:
+            self.dxl_present_position_x, dxl_comm_result_x, dxl_error_x = self.packetHandler.read2ByteTxRx(
+                self.portHandler,
+                self.DXL_ID_X,
+                self.ADDR_MX_PRESENT_POSITION)
+        while dxl_comm_result_y != 0:
+            #self.dxl_present_position_y, dxl_comm_result_y, dxl_error_y = self.packetHandler.read2ByteTxRx(
+                #self.portHandler,
+                #self.DXL_ID_Y,
+                #self.ADDR_MX_PRESENT_POSITION)
+            break
+
+    def go_motor(self, coord_x, coord_y):
+        """
+        Função principal manda o motor ir para a posicação desejada;
+        :param coord_x: Coordenada em pixel do x desejado;
+        :param coord_y: Coordenada em pixel do y desejado;
+        :return:
+        """
+
+        self.calculate_route(coord_x, coord_y)
+
+        while True:
+            self.packetHandler.write2ByteTxRx(self.portHandler, self.DXL_ID_X, self.ADDR_MX_GOAL_POSITION, self.goal_x)
+            # print('Mover para:', self.goal_y)
+            self.get_present_pos()
+            # Verifica se chegou ao destino com um range do x;
+            if not (abs(self.goal_x - self.dxl_present_position_x) > self.TargetRange):
+                break
