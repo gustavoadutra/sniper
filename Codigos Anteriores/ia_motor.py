@@ -215,7 +215,7 @@ def holistic_aim(frame_shooter_def):  # MediaPipe in the Sniper View
 with mp_holistic.Holistic(min_detection_confidence=0.6, min_tracking_confidence=0.6) as holistic:
     while True:
 
-        _, frame_shooter = webcam_shooter.read()  # shooter
+        success, frame_shooter = webcam_shooter.read()  # shooter
         #  _, frame_spotter = webcam_spotter.read()  # spotter
         frame_shooter = cv2.flip(frame_shooter, 1)
         # frame_spotter = cv2.flip(frame_spotter, 1)
@@ -224,8 +224,12 @@ with mp_holistic.Holistic(min_detection_confidence=0.6, min_tracking_confidence=
         # center_x_spotter = int(frame_spotter.shape[1] * 0.5)
         # center_y_spotter = int(frame_spotter.shape[0] * 0.5)
 
-        if not (webcam_shooter.read())[0]:  # or not (webcam_spotter.read())[0]:
-            break
+        if not success:
+            print("Ignoring empty camera frame.")
+            # If loading a video, use 'break' instead of 'continue'.
+            print("Opening the camera...")
+            cap = cv2.VideoCapture(0)
+            continue
 
         cv2.namedWindow('Shooter View')
         cv2.setMouseCallback('Shooter View', mouse_detection)
@@ -292,49 +296,12 @@ with mp_holistic.Holistic(min_detection_confidence=0.6, min_tracking_confidence=
                 dxl_present_position_x, dxl_comm_result_x, dxl_error_x = packetHandler.read2ByteTxRx(portHandler,
                                                                                                      DXL_ID_X,
                                                                                                      ADDR_MX_PRESENT_POSITION)
-                # print("[ID:%03d] GoalPos:%03d  PresPos:%03d" % (DXL_ID_X, dxl_goal_position_x, dxl_present_position_x))
 
-                if dxl_comm_result_x != COMM_SUCCESS:
-                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result_x))
-                elif dxl_error_x != 0:
-                    print("%s" % packetHandler.getRxPacketError(dxl_error_x))
 
                 if not abs(dxl_goal_position_x - dxl_present_position_x) > DXL_MOVING_STATUS_THRESHOLD:
                     key_x[1] = False
                     break
 
-        if (key_h[1] and key_y[1]) is True:  # open y
-            # Read the actual position
-            dxl_present_position_y, dxl_comm_result_y, dxl_error_y = packetHandler.read2ByteTxRx(portHandler, DXL_ID_Y,
-                                                                                    ADDR_MX_PRESENT_POSITION)
-
-            goal_y = dxl_present_position_y + go_motor_y  # add info about where to go.
-
-            # limits of robot
-            if goal_y > DXL_MAXIMUM_POSITION_VALUE_Y:
-                goal_y = DXL_MAXIMUM_POSITION_VALUE_Y
-            if goal_y < DXL_MINIMUM_POSITION_VALUE_Y:
-                goal_y = DXL_MINIMUM_POSITION_VALUE_Y
-            dxl_goal_position_y = goal_y
-
-            # Write goal position
-            packetHandler.write2ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_GOAL_POSITION, dxl_goal_position_y)
-
-            while 1:
-                # Read present position
-                dxl_present_position_y, dxl_comm_result_y, dxl_error_y = packetHandler.read2ByteTxRx(portHandler,
-                                                                                                     DXL_ID_Y,
-                                                                                                     ADDR_MX_PRESENT_POSITION)
-                # print("[ID:%03d] GoalPos:%03d  PresPos:%03d" % (DXL_ID_Y, dxl_goal_position_y, dxl_present_position_y))
-
-                if dxl_comm_result_y != COMM_SUCCESS:
-                    print("%s" % packetHandler.getTxRxResult(dxl_comm_result_y))
-                elif dxl_error_y != 0:
-                    print("%s" % packetHandler.getRxPacketError(dxl_error_y))
-
-                if not abs(dxl_goal_position_y - dxl_present_position_y) > DXL_MOVING_STATUS_THRESHOLD:
-                    key_y[1] = False
-                    break
 
         if key_p[1] is True:  # Print Sniper View
             now = datetime.datetime.now()
