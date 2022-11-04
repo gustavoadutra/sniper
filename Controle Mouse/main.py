@@ -27,8 +27,8 @@ def mouse_detection(event, mouse_x, mouse_y, flag, param):  # Mouse Parameters
     mouseX, mouseY = mouse_x, mouse_y
 
 
-def camera_usage():
-    cap = cv2.VideoCapture(2)
+def camera_usage(cam):
+    cap = cv2.VideoCapture(cam)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 640)
 
@@ -38,7 +38,7 @@ def camera_usage():
             print("Ignorando frame da camera vazio.")
             # If loading a video, use 'break' instead of 'continue'.
             print("Abrindo novamente a camera.")
-            cap = cv2.VideoCapture(2)
+            cap = cv2.VideoCapture(cam)
             continue
 
         cv2.imshow('Camera', image)
@@ -54,5 +54,5 @@ def camera_usage():
 
 
 vig = dynamixel.VigilantMotors()
-camera_usage()
+camera_usage(3)
 

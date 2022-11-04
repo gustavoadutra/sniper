@@ -28,7 +28,7 @@ class VigilantMotors:
         # =======================
 
         self.DXL_ID_X = 1
-        self.goal_max_x = 3100
+        self.goal_max_x = 3000
         self.goal_min_x = 1150
         self.goal_x = 2120
         self.center_x = 320
@@ -56,12 +56,12 @@ class VigilantMotors:
         self.PROTOCOL_VERSION = 1.0
 
         self.BAUDRATE = 57600
-        self.DEVICE = 'COM3'
+        self.DEVICE = '/dev/ttyACM0'
 
         self.TORQUE_ENABLE = 1
         self.TORQUE_DISABLE = 0
 
-        self.TargetRange = 10  # (min > 3)
+        self.TargetRange = 40  # (min > 3)
 
         self.portHandler = PortHandler(self.DEVICE)
         self.packetHandler = PacketHandler(self.PROTOCOL_VERSION)
@@ -79,17 +79,17 @@ class VigilantMotors:
         Vai para a posição inicial;
         :return:
         """
+        print('Iniciando motores.')
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 28, 6)  # P
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 27, 1)  # I
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 26, 100)  # D
+
+        # PID Y
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 28, 6)  # P
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 27, 1)  # I
+        self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 26, 100)  # D
+
         while True:
-            # PID X
-            self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 28, 6)  # P
-            self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 27, 1)  # I
-            self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_X, 26, 200)  # D
-
-            # PID Y
-            self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 28, 6)  # P
-            self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 27, 1)  # I
-            self.packetHandler.write1ByteTxRx(self.portHandler, self.DXL_ID_Y, 26, 200)  # D
-
             self.packetHandler.write2ByteTxRx(self.portHandler, self.DXL_ID_X, self.ADDR_MX_GOAL_POSITION, self.goal_x)
 
             self.packetHandler.write2ByteTxRx(self.portHandler, self.DXL_ID_Y, self.ADDR_MX_GOAL_POSITION, self.goal_y)
@@ -97,7 +97,9 @@ class VigilantMotors:
             self.get_present_pos()
             # Verifica se chegou ao destino com um range do x;
             if not (abs(self.goal_x - self.dxl_present_position_x) > self.TargetRange):
+                print('Posição inicial X.')
                 if not (abs(self.goal_y - self.dxl_present_position_y) > self.TargetRange):
+                    print('Posição inicial .')
                     break
 
     def calculate_route(self, coord_x, coord_y):
@@ -152,5 +154,6 @@ class VigilantMotors:
             # Verifica se chegou ao destino com um range do x;
             if not (abs(self.goal_x - self.dxl_present_position_x) > self.TargetRange):
                 if not (abs(self.goal_y - self.dxl_present_position_y) > self.TargetRange):
+                    print('Chegou ao objetivo.')
                     break
 
