@@ -7,7 +7,6 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_holistic = mp.solutions.holistic
 
-
 holistic = mp_holistic.Holistic(min_detection_confidence=0.8, min_tracking_confidence=0.8)
 
 
