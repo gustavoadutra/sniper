@@ -1,5 +1,4 @@
 from    Interface              import dpg_context          as interface
-from    sniper_utils           import *
 
 import  dearpygui.dearpygui    as     dpg
 import  time 
@@ -14,7 +13,7 @@ from    serial_dy              import *
 
 
 # Defini os IDs das cameras 
-dpg.set_value( SPOTTER_ID, 1 )
+dpg.set_value( SPOTTER_ID, 0 )
 dpg.set_value( SHOOTER_ID, 2 )
 
 
