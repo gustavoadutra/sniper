@@ -116,16 +116,17 @@ def open_port():
         interface.print_callback("Failed to open the port")
         return False
 
-    # Apenas inicia a comunicação Serial
-
 
 def init_serial():
-    if open_port():
-        set_motors_PID()
-        dpg.set_value(SERIAL_OK, True)
-    else:
+    try: 
+        if open_port():
+            set_motors_PID()
+            dpg.set_value(SERIAL_OK, True)
+        else:
+            dpg.set_value(SERIAL_OK, False)
+    except:
         dpg.set_value(SERIAL_OK, False)
-
+        
 
 # Colocar o go_motor_x dentro do registry do dpg 
 # Colocar o go_motor_y dentro do registry do dpg 

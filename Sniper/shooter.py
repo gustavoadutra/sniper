@@ -1,5 +1,6 @@
 from Interface import dpg_context as interface
 from Capture import capture as cap
+
 from typing import Mapping
 
 import dearpygui.dearpygui as dpg
@@ -162,7 +163,6 @@ Ao apertar "E" novamente ela para de funcionar.
 A IA irá medir a distância entre o centro dos olhos com o
 centro da camera entregando valores de x e y.
 '''
-
 
 def run_shooter(holistic):
     global distance_shooter_center_x, distance_shooter_center_y
