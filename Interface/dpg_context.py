@@ -11,7 +11,7 @@ dpg.create_context()
 # REGISTRADORES DE VARIAVEIS GLOBAIS DO DPG (INTERFACE) 
 with dpg.value_registry() as values_registry:
     NUM_DEBUG_LINES = dpg.add_int_value( default_value = 15 )
-    BUT_TOTAL       = dpg.add_int_value( default_value = 10 )
+    BUT_TOTAL       = dpg.add_int_value( default_value = 11 )
     CALLBACK        = dpg.add_string_value( default_value = '' )
 
 
@@ -60,7 +60,9 @@ with dpg.texture_registry( show = True ) as textures_registry:
     sniper_point_w,       sniper_point_h,       sniper_point_c      , sniper_point_data,        = dpg.load_image( PATH + '\\images\\sniper-64.png' )                   
     sniper_gun_w,         sniper_gun_h,         sniper_gun_c        , sniper_gun_data,          = dpg.load_image( PATH + '\\images\\sniper-100.png' )                         
     tracking_w,           tracking_h,           tracking_c          , tracking_data,            = dpg.load_image( PATH + '\\images\\tracking-100.png' )                               
+    motor_w,              motor_h,              motor_c             , motor_data                = dpg.load_image( PATH + '\\images\\motor.png'  )                                                  
     no_image_w,           no_image_h,           no_image_c          , no_image_data             = dpg.load_image( PATH + '\\images\\no_image.png' )                                                  
+    
     # CRIAR AS TEXTURAS DE CADA IMAGEM
     accuracy           = dpg.add_static_texture( width = accuracy_w,          height = accuracy_h,           default_value = accuracy_data           )          
     ammo               = dpg.add_static_texture( width = ammo_w,              height = ammo_h,               default_value = ammo_data               )      
@@ -73,24 +75,33 @@ with dpg.texture_registry( show = True ) as textures_registry:
     sniper_point       = dpg.add_static_texture( width = sniper_point_w,      height = sniper_point_h,       default_value = sniper_point_data       )              
     sniper_gun         = dpg.add_static_texture( width = sniper_gun_w,        height = sniper_gun_h,         default_value = sniper_gun_data         )          
     tracking           = dpg.add_static_texture( width = tracking_w,          height = tracking_h,           default_value = tracking_data           )          
-    no_image           = dpg.add_static_texture( width = no_image_w,          height = no_image_h,           default_value = no_image_data        )
+    motor              = dpg.add_static_texture( width = motor_w,             height = motor_h,              default_value = motor_data              )
+    no_image           = dpg.add_static_texture( width = no_image_w,          height = no_image_h,           default_value = no_image_data           )
 
 
 # CALLBACKS DOS INPUTS DE TECLADO // JOYSTICK // MOUSE 
 with dpg.handler_registry() as handlers_registry: 
+    # Spotter functions
     key_G = dpg.add_key_release_handler( tag = 'key_G', key = dpg.mvKey_G, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
     key_K = dpg.add_key_release_handler( tag = 'key_K', key = dpg.mvKey_K, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
     key_R = dpg.add_key_release_handler( tag = 'key_R', key = dpg.mvKey_R, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
+    # Tracking
     key_E = dpg.add_key_release_handler( tag = 'key_E', key = dpg.mvKey_E, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
-    key_A = dpg.add_key_release_handler( tag = 'key_A', key = dpg.mvKey_A, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
-    key_H = dpg.add_key_release_handler( tag = 'key_H', key = dpg.mvKey_H, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
+    # Calibrate 
+    key_C = dpg.add_key_release_handler( tag = 'key_C', key = dpg.mvKey_C, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
+    # Picture 
     key_P = dpg.add_key_release_handler( tag = 'key_P', key = dpg.mvKey_P, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
+    # Laser
     key_L = dpg.add_key_release_handler( tag = 'key_L', key = dpg.mvKey_L, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
+    # Serial
+    key_H = dpg.add_key_release_handler( tag = 'key_H', key = dpg.mvKey_H, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
+    # Serial motors 
     key_Z = dpg.add_key_release_handler( tag = 'key_Z', key = dpg.mvKey_Z, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
     key_X = dpg.add_key_release_handler( tag = 'key_X', key = dpg.mvKey_X, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
     key_Y = dpg.add_key_release_handler( tag = 'key_Y', key = dpg.mvKey_Y, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' key pressed\n') )
-    r_mouse = dpg.add_mouse_click_handler( button = dpg.mvMouseButton_Right, callback =  lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) +str(d) +' R click pressed\n') )
-    l_mouse = dpg.add_mouse_click_handler( button = dpg.mvMouseButton_Left, callback =  lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) +str(d) +' L click pressed\n') )
+    # Mouse 
+    r_mouse = dpg.add_mouse_click_handler( button = dpg.mvMouseButton_Right, callback =  lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + '' ) )
+    l_mouse = dpg.add_mouse_click_handler( button = dpg.mvMouseButton_Left, callback =  lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK)  + '' ) )
 
 
 # CALLBACK DE REDIMENSIONAMENTO DA TELA PRINCIPAL 
@@ -113,9 +124,10 @@ def resize_main( sender, data, user ):
     dpg.configure_item( 'but_K', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_R', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_E', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
-    dpg.configure_item( 'but_A', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
+    dpg.configure_item( 'but_C', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_H', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_P', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
+    dpg.configure_item( 'but_L', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_spotter', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_shooter', width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
     dpg.configure_item( 'but_serial' , width = dpg.get_item_width( 'win_info_above' )/dpg.get_value(BUT_TOTAL)- 17 )
@@ -125,7 +137,7 @@ def resize_main( sender, data, user ):
 # TODOS ELEMENTOS DESENHADOS NA TELA FORAM FEITOS AQUI 
 # PARA ADICIONAR UM BOTÃO OU ALGUMA FUNCIONALIDADE A MAIS, DEVE SER FEITA AQUI 
 def init_main( window_name ):
-    with dpg.window( tag = 'main_window', no_close = True, no_collapse = True, no_move = True, no_scrollbar = True, no_title_bar = True ):
+    with dpg.window( tag = 'main_window', no_close = True, no_collapse = True, no_move = True, no_scrollbar = True, no_title_bar = False ):
         with dpg.menu_bar(label = "MenuBar"):
             dpg.add_menu_item( label = "Inicio" )
             dpg.add_menu_item( label = "IRAE" )
@@ -146,43 +158,50 @@ def init_main( window_name ):
                     # ROI Square
                     dpg.add_image_button( tag = 'but_G', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = facial_recognition  )
                     # TRACKING
-                    dpg.add_image_button( tag = 'but_K', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = accuracy  )
+                    dpg.add_image_button( tag = 'but_K', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = tracking  )
                     # Reset 
                     dpg.add_image_button( tag = 'but_R', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = reset_button  )
-                    
+                    #  FACE RECOGNITION 
                     dpg.add_image_button( tag = 'but_E', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = person_track  )
-                    dpg.add_image_button( tag = 'but_A', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = ammo  )
-                    dpg.add_image_button( tag = 'but_H', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = take_picture  )
-
+                    # Calibrate 
+                    dpg.add_image_button( tag = 'but_C', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = accuracy )
+                    # Laser 
+                    dpg.add_image_button( tag = 'but_L', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = sniper_gun  )
                     #Picture 
-                    dpg.add_image_button( tag = 'but_P', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = sniper_gun  )
-
-                    # Spotter 
-                    dpg.add_image_button( tag = 'but_spotter', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = sniper_point  )
-                    # Shooter
-                    dpg.add_image_button( tag = 'but_shooter', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = tracking  )
-                    # Serial 
+                    dpg.add_image_button( tag = 'but_P', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = take_picture  )
+                    # Enable motors 
+                    dpg.add_image_button( tag = 'but_H', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = motor  )
+                    # States 
+                    dpg.add_image_button( tag = 'but_spotter', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = ammo )
+                    dpg.add_image_button( tag = 'but_shooter', height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = sniper_point  )
                     dpg.add_image_button( tag = 'but_serial' , height = 75, width = dpg.get_item_width( dpg.last_container() )/dpg.get_value(BUT_TOTAL) -6, callback = lambda s,d,u : dpg.set_value( CALLBACK, dpg.get_value(CALLBACK) + s + ' button pressed\n'), texture_tag = services  )
 
 
                     # ADICIONA DICAS QUANDO O MOUSE É POSTO EM CIMA DE ALGUM BOTÃO 
+                    # ROI Square 
                     with dpg.tooltip( parent = 'but_G' ):
                         dpg.add_text('ROI Square:\nCria um retangulo para \nfazer o enquadramento do rosto \npara perseguição\n\nshortkey: G')
                     with dpg.tooltip( parent = 'but_K' ):
                         dpg.add_text('Perseguição:\nFaz a perseguição da pessoa\nClick+ROI open\n\nshortkey: K')
+                    # Reset 
                     with dpg.tooltip( parent = 'but_R' ):
                         dpg.add_text('ROI reset:\nReseta a função ROI Square\n\nshortkey: R')
-                    
+                    # Tracking
                     with dpg.tooltip( parent = 'but_E' ):
                         dpg.add_text('Tracking:\nInicia a perseguição\n\nshortkey: E')
-                    with dpg.tooltip( parent = 'but_A' ):
-                        dpg.add_text('function_B\nshortkey: B')
-                    with dpg.tooltip( parent = 'but_H' ):
-                        dpg.add_text('function_H\nshortkey: H')
-
+                    # Calibrate desable 
+                    with dpg.tooltip( parent = 'but_C' ):
+                        dpg.add_text('Calibrate\nFunção desativada para testes.\nshortkey: C')
+                    # Laser
+                    with dpg.tooltip( parent = 'but_L' ):
+                        dpg.add_text('Lase point\nAtiva o laser\nshortkey: L')
+                    # Picture
                     with dpg.tooltip( parent = 'but_P' ):
                         dpg.add_text('Tirar foto instantânea.\nshortkey: P')
-
+                    # Enable motors 
+                    with dpg.tooltip( parent = 'but_H' ):
+                        dpg.add_text('Habilitar o movimento dos motores.\nshortkey: H')
+                    # Botões de estados 
                     with dpg.tooltip( parent = 'but_spotter' ):
                         dpg.add_text('Estado do Spotter\nPode ser manipulado.\nshortkey: Z')
                     with dpg.tooltip( parent = 'but_shooter' ):

@@ -2,10 +2,14 @@ from Interface import dpg_context as interface, variables as var
 from Capture   import capture     as cap 
 
 import dearpygui.dearpygui as dpg 
+import datetime
 import cv2
+import os
+
+PATH = os.path.dirname( __file__) 
 
 # Create tracker TLD
-tracker = cv2.legacy.TrackerTLD_create()  
+tracker = cv2.legacy.TrackerTLD_create()   
 
 r_ROI_X = 50
 r_ROI_Y = 50
@@ -25,9 +29,35 @@ Spotter     = cap.Spotter
 # Registradores de controle 
 SPOOTER_OK  = dpg.add_bool_value( tag = 'SPOOTER_OK', default_value = False, parent = interface.values_registry )
 SPOTTER_ID  = dpg.add_int_value ( default_value = 0    , parent = interface.values_registry )
-KEY_G       = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
 L_BUTTON    = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
 BBOX_TRACK  = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+
+KEY_G = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+KEY_C = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+KEY_P = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+
+
+
+
+"""
+Faz duas linhas na tela, para a calibragem das câmeras e laser;
+    :param frame_shooter: Frame da câmera Shooter;
+    :param frame_spotter: Frame da câmera Spotter;
+    :return: Frames com as linhas feitos;
+"""
+def KEY_C_callback (sender, data, user): 
+    dpg.set_value( KEY_C, not dpg.get_value( KEY_C ))
+    interface.print_callback( 'Calibrate: ' + str(dpg.get_value(KEY_C)) )
+
+"""
+Tecla P - Tira uma foto;
+:param frame: Frame que irá se tornar imagem;
+:return: None 
+"""
+def KEY_P_callback( sender, data, user ):
+    dpg.set_value( KEY_P, not dpg.get_value( KEY_P ))
+    interface.print_callback( 'Taking picture.')
+
 
 # Turn ON the Selection of a ROI
 def KEY_G_callback (sender, data, user): 
@@ -62,14 +92,20 @@ def mouse_wheel( sendar, data, user ):  # Mouse Parameters [ rotação ]
     r_ROI_X, r_ROI_Y = r_ROI_X, r_ROI_Y
     interface.print_callback( 'New range: ROI X =' + str(r_ROI_X) + 'ROI Y =' + str(r_ROI_Y))
 
+def but_spotter( sender, data, user ): 
+    dpg.set_value( SPOOTER_OK, not dpg.get_value( SPOOTER_OK ) )
+
+
 # Aplicação dos handlers 
 dpg.add_mouse_click_handler( dpg.mvMouseButton_Left, callback = mouse_l_button, parent = interface.handlers_registry  )
 dpg.add_mouse_wheel_handler( callback = mouse_wheel, parent = interface.handlers_registry  ) 
+dpg.configure_item( 'but_spotter', callback = but_spotter  )
 dpg.configure_item( 'but_K', callback = mouse_l_button  )
 dpg.configure_item( 'but_G', callback = KEY_G_callback  )
 dpg.configure_item( 'key_G', callback = KEY_G_callback  )
 dpg.configure_item( 'but_R', callback = KEY_R_callback  )
 dpg.configure_item( 'key_R', callback = KEY_R_callback  )
+dpg.configure_item( 'key_P', callback = KEY_P_callback  )
 
 
 '''
@@ -131,12 +167,20 @@ def run_spotter( ):
         else:
             dpg.bind_item_theme( 'but_K', theme = interface.def_button )  
 
-
-        if dpg.get_value( 'KEY_A' ): 
+        # Calibração
+        if dpg.get_value( KEY_C ): 
             center_x_shooter = spotter_texture.shape[0] // 2
             center_y_shooter = spotter_texture.shape[1] // 2
             cv2.line( spotter_texture, (center_x_shooter, 0), (center_x_shooter, spotter_texture.shape[0]), ( var.BGR[7]), 2 )
             cv2.line( spotter_texture, (0, center_y_shooter), (spotter_texture.shape[1], center_y_shooter), ( var.BGR[7]), 2 )
+
+        # Take picture 
+        if dpg.get_value( KEY_P ):
+            dpg.set_value( KEY_P, not dpg.get_value( KEY_P ) )
+            if not os.path.exists('TargetPics'):
+                os.mkdir('TargetPics')
+            now = datetime.datetime.now()
+            cv2.imwrite( PATH + '/TargetPics/target{}{}{}{}{}{}.jpg'.format(now.year, now.month, now.day, now.hour, now.minute, now.second), spotter_texture )
 
         # Atualiza a imagem para ficar de acordo com o padrão dpg 
         spotter_texture = cap.att_capture_texture( spotter_texture  )

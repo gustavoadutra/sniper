@@ -1,5 +1,6 @@
 from Interface  import dpg_context  as interface
 from Capture    import capture      as cap 
+from serial_dy  import GO_MOTOR_X, GO_MOTOR_Y 
 
 import dearpygui.dearpygui as dpg 
 import mediapipe as mp
@@ -35,10 +36,13 @@ Shooter     = cap.Shooter
 
 # Registradores de controle 
 SHOOTER_OK  = dpg.add_bool_value( tag = 'SHOOTER_OK', default_value = False, parent = interface.values_registry )
+AUX_E       = dpg.add_bool_value( tag = 'AUX_E',      default_value = False, parent = interface.values_registry )
+
 SHOOTER_ID  = dpg.add_int_value ( default_value = 0    , parent = interface.values_registry ) 
 
 KEY_E       = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
 KEY_P       = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+
 
 # Turn ON the Selection of a ROI
 def KEY_E_callback (sender, data, user): 
@@ -50,9 +54,15 @@ def KEY_P_callback (sender, data, user):
     dpg.set_value( KEY_P, not dpg.get_value( KEY_P ))
     interface.print_callback( "Taing picture:", str(dpg.get_value(KEY_P)) )
 
+def but_shooter( sender, data, user ): 
+    dpg.set_value( SHOOTER_OK, not dpg.get_value( SHOOTER_OK ) )
+
 # Aplica os callbacks 
+dpg.configure_item( 'but_shooter', callback = but_shooter  )
 dpg.configure_item( 'key_E', callback = KEY_E_callback  )
+dpg.configure_item( 'but_E', callback = KEY_E_callback  )
 dpg.configure_item( 'key_P', callback = KEY_P_callback  )
+dpg.configure_item( 'but_P', callback = KEY_P_callback  )
 
 
 
@@ -93,6 +103,7 @@ def run_shooter( holistic ):
                 distance_shooter_center_x = center_x_shooter - x_shooter
                 distance_shooter_center_y = center_y_shooter - y_shooter
 
+
                 cv2.line(shooter_texture, (x_shooter, y_shooter), (center_x_shooter, center_y_shooter), (BGR[6]), 4)
                 cv2.putText(shooter_texture, f'x:{x_shooter} y:{y_shooter}', (x_shooter, y_shooter - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (BGR[8]), 2)  # hypotenuse
                 cv2.line(shooter_texture, (x_shooter, center_y_shooter), (center_x_shooter, center_y_shooter), (BGR[6]), 2)
@@ -100,13 +111,19 @@ def run_shooter( holistic ):
                 cv2.line(shooter_texture, (center_x_shooter, y_shooter), (center_x_shooter, center_y_shooter), (BGR[6]), 4)
                 cv2.putText(shooter_texture, f'{distance_shooter_center_y}', (center_x_shooter + 20, y_shooter + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (BGR[8]), 2)  # y
                 
+                dpg.set_value( GO_MOTOR_X, value =  distance_shooter_center_x + 200 )  
+                dpg.set_value( GO_MOTOR_Y, value =  distance_shooter_center_y + 200 )
+
                 aim_sq = 50
                 if distance_shooter_center_x in range(-aim_sq, aim_sq) and distance_shooter_center_y in range(-aim_sq, aim_sq):            
                     dpg.bind_item_theme( 'but_E', theme = interface.on_button )
-                else:
+                    dpg.set_value( AUX_E, False ) 
+                else:            
+                    dpg.set_value( AUX_E, True )    
                     dpg.bind_item_theme( 'but_E', theme = interface.off_button )
         else: 
             dpg.bind_item_theme( 'but_E', theme = interface.def_button )
+            dpg.set_value( AUX_E, False ) 
             
 
         if dpg.get_value( KEY_P ):
