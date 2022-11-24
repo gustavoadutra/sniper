@@ -2,15 +2,18 @@ from Interface import dpg_context as interface
 from dynamixel_sdk import *
 
 import dearpygui.dearpygui as dpg 
+import glob
 import cv2 
 
 
 # REGISTRADORES DPG 
-DEVICE     = dpg.add_string_value( default_value = 'COM18', parent = interface.values_registry )
+DEVICE     = dpg.add_string_value( tag = 'DEVICE',   default_value = 'COM3', parent = interface.values_registry )
+BAUDRATE   = dpg.add_int_value   ( tag = 'BAUDRATE', default_value = 57600, parent = interface.values_registry  )
+
 GO_MOTOR_X = dpg.add_float_value( default_value = 0, parent = interface.values_registry )
 GO_MOTOR_Y = dpg.add_float_value( default_value = 0, parent = interface.values_registry )
 
-SERIAL_OK = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+SERIAL_OK = dpg.add_bool_value( tag = 'SERIAL_OK', default_value = False, parent = interface.values_registry )
 
 KEY_A = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
 KEY_H = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
@@ -32,7 +35,6 @@ PROTOCOL_VERSION = 1.0
 # Default setting
 DXL_ID_X = 1
 DXL_ID_Y = 2
-BAUDRATE = 57600
 
 TORQUE_ENABLE  = 1
 TORQUE_DISABLE = 0
@@ -50,9 +52,9 @@ dxl_goal_position_y = 2050  # Goal position
 DXL_MOVING_STATUS_THRESHOLD = 30  # (min > 3)
 MAP = 1.017
 
+
 portHandler = PortHandler( dpg.get_value( DEVICE ) ) 
 packetHandler = PacketHandler(PROTOCOL_VERSION)
-
 
 
 # Adjustment on Screen/Calibrate
@@ -70,8 +72,15 @@ def KEY_L_callback (sender, data, user):
     dpg.set_value( KEY_L, not dpg.get_value( KEY_L ))
     interface.print_callback( 'Laser point: ' + str(dpg.get_value(KEY_L)) )
 
+def KEY_Y_callback( sender, data, user ): 
+    if dpg.get_value( SERIAL_OK ):
+        portHandler.closePort()
+        dpg.set_value( SERIAL_OK, False)
+    else: 
+        init_serial() 
 
 # Aplica os callbacks 
+dpg.configure_item( 'key_Y', callback = KEY_Y_callback  )
 dpg.configure_item( 'key_A', callback = KEY_A_callback  )
 dpg.configure_item( 'key_H', callback = KEY_H_callback  )
 dpg.configure_item( 'key_L', callback = KEY_L_callback  )
@@ -80,34 +89,30 @@ dpg.configure_item( 'key_L', callback = KEY_L_callback  )
 # PID X e Y
 def set_motors_PID():
     global packetHandler, portHandler 
-
+    # print("define X PID")
     packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, 28, 7)      # P
     packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, 27, 0)      # I
     packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, 26, 200)    # D
-    # print("define PID")
-
-    # packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 28, 7)      # P
-    # packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 27, 0)      # I
-    # packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 26, 200)    # D
-
+    # print("define Y PID")
+    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 28, 7)      # P
+    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 27, 0)      # I
+    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, 26, 200)    # D
     # Enable Dynamixel Torque
     packetHandler.write1ByteTxRx(portHandler, DXL_ID_X, ADDR_MX_TORQUE, TORQUE_ENABLE)
-    # packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_TORQUE, TORQUE_ENABLE)
-    # print('define Torque')
-
+    packetHandler.write1ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_TORQUE, TORQUE_ENABLE)
     # Go to initial position
     packetHandler.write2ByteTxRx(portHandler, DXL_ID_X, ADDR_MX_GOAL_POSITION, dxl_goal_position_x)
-    # packetHandler.write2ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_GOAL_POSITION, dxl_goal_position_y)
-    # print('Go to X init')
+    packetHandler.write2ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_GOAL_POSITION, dxl_goal_position_y)
 
 
 # Open port
 def open_port(): 
-    global portHandler
-
+    global portHandler, packetHandler
+    portHandler = PortHandler( dpg.get_value( DEVICE ) ) 
+    packetHandler = PacketHandler(PROTOCOL_VERSION)
     if portHandler.openPort():
         interface.print_callback("Succeeded to open the port")
-        if portHandler.setBaudRate(BAUDRATE):
+        if portHandler.setBaudRate( dpg.get_value(BAUDRATE) ):
             interface.print_callback("Succeeded to change the baudrate")
             return True
         else:
@@ -120,12 +125,16 @@ def open_port():
 
 # Apenas inicia a comunicação Serial 
 def init_serial():
-    if open_port():
-        set_motors_PID() 
-        dpg.set_value( SERIAL_OK, True )           
-    else: 
+    try:
+        if open_port():
+            set_motors_PID() 
+            dpg.set_value( SERIAL_OK, True )           
+        else: 
+            dpg.set_value( SERIAL_OK, False )
+            interface.print_callback( 'Serial not OK')
+    except:
         dpg.set_value( SERIAL_OK, False )
-        
+        interface.print_callback( 'Serial not OK')
 
 # Colocar o go_motor_x dentro do registry do dpg 
 # Colocar o go_motor_y dentro do registry do dpg 
@@ -133,13 +142,11 @@ def init_serial():
 
 # Roda no loop principal do código 
 def run_serial(): 
-
     # Liga o Laser
     if dpg.get_value( KEY_L ):
         portHandler.writePort('1'.encode())
     else:
         portHandler.writePort('0'.encode())
-
 
     if dpg.get_value(KEY_H) and dpg.get_value( KEY_X ):
         while True:
@@ -173,7 +180,6 @@ def run_serial():
                 dpg.set_value( KEY_X, False )
                 break
 
-
     if dpg.get_value( KEY_H ) and dpg.get_value( KEY_Y ):
         # Read the actual position
         dxl_present_position, dxl_comm_result, dxl_error = packetHandler.read2ByteTxRx(portHandler, DXL_ID_Y, ADDR_MX_PRESENT_POSITION)
@@ -198,3 +204,4 @@ def run_serial():
             if not abs(dxl_goal_position - dxl_present_position) > DXL_MOVING_STATUS_THRESHOLD:
                 dpg.set_value( KEY_Y, False )
                 break
+

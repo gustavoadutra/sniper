@@ -34,7 +34,7 @@ Shooter     = cap.Shooter
 
 
 # Registradores de controle 
-SHOOTER_OK  = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
+SHOOTER_OK  = dpg.add_bool_value( tag = 'SHOOTER_OK', default_value = False, parent = interface.values_registry )
 SHOOTER_ID  = dpg.add_int_value ( default_value = 0    , parent = interface.values_registry ) 
 
 KEY_E       = dpg.add_bool_value( default_value = False, parent = interface.values_registry )
@@ -43,11 +43,12 @@ KEY_P       = dpg.add_bool_value( default_value = False, parent = interface.valu
 # Turn ON the Selection of a ROI
 def KEY_E_callback (sender, data, user): 
     dpg.set_value( KEY_E, not dpg.get_value( KEY_E ))
-    interface.print_callback( str(dpg.get_value(KEY_E)) )
+    interface.print_callback( "Target tracking " + str(dpg.get_value(KEY_E)) )
+
 # Take a picture of target 
 def KEY_P_callback (sender, data, user): 
     dpg.set_value( KEY_P, not dpg.get_value( KEY_P ))
-    interface.print_callback( str(dpg.get_value(KEY_P)) )
+    interface.print_callback( "Taing picture:", str(dpg.get_value(KEY_P)) )
 
 # Aplica os callbacks 
 dpg.configure_item( 'key_E', callback = KEY_E_callback  )
@@ -72,7 +73,7 @@ def run_shooter( holistic ):
     if shooter_status:
 
         # Shooter tracker   
-        if dpg.get_value( KEY_E ): 
+        if dpg.get_value( KEY_E ):
             center_x_shooter = int(shooter_texture.shape[1] * 0.5)
             center_y_shooter = int(shooter_texture.shape[0] * 0.5)
             
@@ -100,8 +101,13 @@ def run_shooter( holistic ):
                 cv2.putText(shooter_texture, f'{distance_shooter_center_y}', (center_x_shooter + 20, y_shooter + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (BGR[8]), 2)  # y
                 
                 aim_sq = 50
-                if distance_shooter_center_x in range(-aim_sq, aim_sq) and distance_shooter_center_y in range(-aim_sq, aim_sq):
-                    interface.print_callback( 'Target on' )
+                if distance_shooter_center_x in range(-aim_sq, aim_sq) and distance_shooter_center_y in range(-aim_sq, aim_sq):            
+                    dpg.bind_item_theme( 'but_E', theme = interface.on_button )
+                else:
+                    dpg.bind_item_theme( 'but_E', theme = interface.off_button )
+        else: 
+            dpg.bind_item_theme( 'but_E', theme = interface.def_button )
+            
 
         if dpg.get_value( KEY_P ):
             interface.print_callback( 'Taking picture.')
@@ -116,7 +122,6 @@ def run_shooter( holistic ):
         if dpg.get_value( 'KEY_A' ):
             center_x_shooter = dpg.get_item_width('win_cam_shooter')//2 # int(shooter_texture.shape[0] / 2 )
             center_y_shooter = dpg.get_item_width('win_cam_shooter')//2 # int(shooter_texture.shape[1] / 2 )
-
             cv2.line( shooter_texture, (center_x_shooter, 0), (center_x_shooter, shooter_texture.shape[0]), ( BGR[7]), 2 )
             cv2.line( shooter_texture, (0, center_y_shooter), (shooter_texture.shape[1], center_y_shooter), ( BGR[7]), 2 )
 
